@@ -85,3 +85,12 @@ def setup_seed(seed = None):
     np.random.seed(seed)
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
+
+def mkdir(dir, permission=None):
+    isExist = os.path.exists(dir)
+    if not isExist:
+        try:
+            original_umask = os.umask(0)
+            os.makedirs(dir, 0o777)
+        finally:
+            os.umask(original_umask)

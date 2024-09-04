@@ -13,6 +13,7 @@ import torch.utils.tensorboard as tensorboard
 from auto_LiRPA import BoundedModule, BoundedTensor, PerturbationLpNorm
 from auto_LiRPA.perturbations import *
 from algo_envs.nets import Adversary, PPOMujocoNet
+from libs import utils
 
 import random
 
@@ -26,7 +27,7 @@ parser.add_argument("--num_envs", type=int, default=4)
 parser.add_argument("--env_name", type=str, default="Humanoid")
 parser.add_argument("--use_gpu", type=bool, default=False)
 parser.add_argument("--enable_lr_decay", type=bool, default=False)
-parser.add_argument("--max_version", type=int, default=1000000)
+# parser.add_argument("--max_version", type=int, default=1000000)
 parser.add_argument("--enable_mini_batch", type=bool, default=False)
 parser.add_argument("--mini_batch_size", type=int, default=32)
 parser.add_argument("--enable_adv_norm", type=bool, default=True)
@@ -41,6 +42,8 @@ parser.add_argument("--num_trainer", type=int, default=1)
 parser.add_argument("--attacker_limit", type=int, default=0.01)
 parser.add_argument("--agent_model_path", type=str, default="None")
 parser.add_argument("--eps_steps",type=int,default=10)
+parser.add_argument("--max_version", type=int, default=2)
+parser.add_argument("--repeat_times", type=int, default=2)
 args = parser.parse_args()
 
 env_config = {
@@ -319,81 +322,71 @@ class AttackerTraning:
             self.optimizer.step()
 
 if __name__ == "__main__":
-    attacker_limits = [0.01,0.02,0.03,0.04,0.05,0.06]
-    for attacker_limit in attacker_limits:
-        args.attacker_limit = attacker_limit
-        for _ in range(2):
-            print("Start Training")
-            comment = "SAPPO Mujoco Attacker Training"
-            seed = random.randint(0,100000)
-            torch.manual_seed(seed)
-            np.random.seed(seed)
-            random.seed(seed)
+    # attacker_limits = [0.01,0.02,0.03,0.04,0.05,0.06]
+    # for attacker_limit in attacker_limits:
+        # args.attacker_limit = attacker_limit
+        # for _ in range(2):
+    print("Start Training")
+    comment = "SAPPO Mujoco Attacker Training"
+    seed = random.randint(0,100000)
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
-            writer = tensorboard.SummaryWriter(comment=comment)
-            # initialize training network
-            ppo_agent_net = PPOMujocoNet(env_config[current_env_name].obs_dim, env_config[current_env_name].act_dim, env_config[current_env_name].hide_dim)
-            state_dim = env_config[current_env_name].obs_dim
-            hidden_size = env_config[current_env_name].hide_dim
-            attacker_net = Adversary(state_dim, hidden_size)
-            config_dict = {}
-            config_dict[0] = 0
-            config_dict['num_trainer'] = 1
-            config_dict['train_version'] = 0
+    writer = tensorboard.SummaryWriter(comment=comment)
+    # initialize training network
+    ppo_agent_net = PPOMujocoNet(env_config[current_env_name].obs_dim, env_config[current_env_name].act_dim, env_config[current_env_name].hide_dim)
+    state_dim = env_config[current_env_name].obs_dim
+    hidden_size = env_config[current_env_name].hide_dim
+    attacker_net = Adversary(state_dim, hidden_size)
+    config_dict = {}
+    config_dict[0] = 0
+    config_dict['num_trainer'] = 1
+    config_dict['train_version'] = 0
 
-            attacker_net = Adversary(state_dim, hidden_size, args.attacker_limit)
-            model_path = args.agent_model_path
-            if os.path.exists(model_path):
-                ppo_agent_net.load_state_dict(torch.load(model_path))
-                print("Load agent model from",model_path)
-            else:
-                print("Can't find agent model from",model_path)
+    attacker_net = Adversary(state_dim, hidden_size, args.attacker_limit)
+    model_path = args.agent_model_path
+    if os.path.exists(model_path):
+        ppo_agent_net.load_state_dict(torch.load(model_path))
+        print("Load agent model from",model_path)
+    else:
+        print("Can't find agent model from",model_path)
 
-            sample_agent = AttackAgent(ppo_agent_net, attacker_net, config_dict)
-            check_agent = AttackAgent(ppo_agent_net, attacker_net, config_dict, True)
-            trainer = AttackerTraning(attacker_net, config_dict, 0)
+    sample_agent = AttackAgent(ppo_agent_net, attacker_net, config_dict)
+    check_agent = AttackAgent(ppo_agent_net, attacker_net, config_dict, True)
+    trainer = AttackerTraning(attacker_net, config_dict, 0)
 
-            MAX_VERSION = 50
-            REPEAT_TIMES = 10
+    for _ in range(args.max_version):
+        # Sampling training data and calculating time cost
+        start_time = time.time()
+        samples_list = sample_agent.sample_env()
+        end_time = time.time()-start_time
+        print('sample_time:',end_time)
         
-            """check_rewards = []
-            for check_time in range(1000):
-                infos = check_agent.check_env()
-                check_rewards.append(infos['sum_rewards'])
-            print("mean_check_rewards:", np.mean(check_rewards))
-        """
-            for _ in range(MAX_VERSION):
-                # Sampling training data and calculating time cost
-                start_time = time.time()
-                samples_list = sample_agent.sample_env()
-                end_time = time.time()-start_time
-                print('sample_time:',end_time)
-                
-                # Calculating policy gradients and time cost
-                start_time = time.time()
-                trainer.begin_batch_train(samples_list)
-                for _ in range(REPEAT_TIMES):
-                    trainer.generate_grads()
-                trainer.end_batch_train()
-                end_time = time.time()-start_time
-                print('calculate_time:',end_time)
-                
-                # Updating model version
-                config_dict[0] = config_dict[0] + 1
-                config_dict['train_version'] = config_dict[0]
-                
-                # Evaluating agent
-                infos = check_agent.check_env()
-                for k,v in infos.items():
-                    writer.add_scalar(k,v,config_dict[0])
-                    
-                print("version:",config_dict[0],"sum_rewards:",infos['sum_rewards'])
+        # Calculating policy gradients and time cost
+        start_time = time.time()
+        trainer.begin_batch_train(samples_list)
+        for _ in range(args.repeat_times):
+            trainer.generate_grads()
+        trainer.end_batch_train()
+        end_time = time.time()-start_time
+        print('calculate_time:',end_time)
+        
+        # Updating model version
+        config_dict[0] = config_dict[0] + 1
+        config_dict['train_version'] = config_dict[0]
+        
+        # Evaluating agent
+        infos = check_agent.check_env()
+        for k,v in infos.items():
+            writer.add_scalar(k,v,config_dict[0])
+            
+        print("version:",config_dict[0],"sum_rewards:",infos['sum_rewards'])
 
-            """check_rewards = []
-            for check_time in range(1000):
-                infos = check_agent.check_env()
-                check_rewards.append(infos['sum_rewards'])
-            print("mean_check_rewards:", np.mean(check_rewards))"""
+    # model_path = "saved_modelV2\\"+args.env_name+"\\"+str(args.attacker_limit)+"\\adversarial_attack_rs_seed_"+str(seed)+".pth"
+    # model_path = os.path.normpath(model_path)
 
-            model_path = "saved_model\\"+args.env_name+"\\"+str(args.attacker_limit)+"\\adversarial_attack_rs_seed_"+str(seed)+".pth"
-            torch.save(attacker_net.state_dict(), model_path)
+    model_path = os.path.join("saved_modelV2", args.env_name, str(args.attacker_limit))
+    utils.mkdir(model_path)
+    model_path = os.path.join(model_path, f"adversarial_attack_rs_seed_{seed}.pth")
+    torch.save(attacker_net.state_dict(), model_path)
