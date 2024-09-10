@@ -1,0 +1,30 @@
+
+The following have been reloaded with a version change:
+  1) Anaconda3/2020.07 => Anaconda3/2024.02-1
+
+no change     /sw/eb/sw/Anaconda3/2024.02-1/condabin/conda
+no change     /sw/eb/sw/Anaconda3/2024.02-1/bin/conda
+no change     /sw/eb/sw/Anaconda3/2024.02-1/bin/conda-env
+no change     /sw/eb/sw/Anaconda3/2024.02-1/bin/activate
+no change     /sw/eb/sw/Anaconda3/2024.02-1/bin/deactivate
+no change     /sw/eb/sw/Anaconda3/2024.02-1/etc/profile.d/conda.sh
+no change     /sw/eb/sw/Anaconda3/2024.02-1/etc/fish/conf.d/conda.fish
+no change     /sw/eb/sw/Anaconda3/2024.02-1/shell/condabin/Conda.psm1
+no change     /sw/eb/sw/Anaconda3/2024.02-1/shell/condabin/conda-hook.ps1
+no change     /sw/eb/sw/Anaconda3/2024.02-1/lib/python3.11/site-packages/xontrib/conda.xsh
+no change     /sw/eb/sw/Anaconda3/2024.02-1/etc/profile.d/conda.csh
+no change     /home/niupuhua.123/.bashrc
+No action taken.
+/scratch/user/niupuhua.123/.conda/envs/sappo/lib/python3.10/site-packages/torch/utils/tensorboard/__init__.py:4: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+  if not hasattr(tensorboard, "__version__") or LooseVersion(
+/scratch/user/niupuhua.123/.conda/envs/sappo/lib/python3.10/site-packages/torch/utils/cpp_extension.py:25: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+  from pkg_resources import packaging  # type: ignore[attr-defined]
+/scratch/user/niupuhua.123/.conda/envs/sappo/lib/python3.10/site-packages/pkg_resources/__init__.py:3144: DeprecationWarning: Deprecated call to `pkg_resources.declare_namespace('google')`.
+Implementing implicit namespace packages (as specified in PEP 420) is preferred to `pkg_resources.declare_namespace`. See https://setuptools.pypa.io/en/latest/references/keywords.html#keyword-namespace-packages
+  declare_namespace(pkg)
+/scratch/user/niupuhua.123/.conda/envs/sappo/lib/python3.10/site-packages/pkg_resources/__init__.py:3144: DeprecationWarning: Deprecated call to `pkg_resources.declare_namespace('mpl_toolkits')`.
+Implementing implicit namespace packages (as specified in PEP 420) is preferred to `pkg_resources.declare_namespace`. See https://setuptools.pypa.io/en/latest/references/keywords.html#keyword-namespace-packages
+  declare_namespace(pkg)
+/scratch/user/niupuhua.123/.conda/envs/sappo/lib/python3.10/site-packages/torch/utils/tensorboard/summary.py:282: DeprecationWarning: Conversion of an array with ndim > 0 to a scalar is deprecated, and will error in future. Ensure you extract a single element from your array before performing this operation. (Deprecated NumPy 1.25.)
+  scalar = float(scalar)
+slurmstepd: error: *** JOB 11294656 ON c386 CANCELLED AT 2024-09-05T16:45:56 ***
