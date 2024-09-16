@@ -2,7 +2,7 @@
 
 ##NECESSARY JOB SPECIFICATIONS
 #SBATCH --job-name=sappo_0_06       #Set the job name to "JobExample1"
-#SBATCH --time=24:00:00              #Set the wall clock limit to 1hr and 30min
+#SBATCH --time=12:00:00              #Set the wall clock limit to 1hr and 30min
 #SBATCH --ntasks=1                   #Request 1 task
 #SBATCH --mem=2560MB                  #Request 2560MB (2.5GB) per node
 #SBATCH --output=std_out/sappo.%j      #Send stdout/err to "Example1Out.[jobID]"
@@ -20,6 +20,6 @@ conda init bash
 source ~/.bashrc
 conda activate sappo                 # Activate your conda environment
 
-python algo_envs/adversarial_attack_rs.py --env_name=Hopper --attacker_limit=0.06 --max_version=200000
+python algo_envs/adversarial_attack_rs.py --env_name=Hopper --attacker_limit=0.06 --max_version=10000
 # Deactivate conda environment (optional, as it will deactivate upon job completion)
 conda deactivate
